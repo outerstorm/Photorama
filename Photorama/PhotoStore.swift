@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import CoreData
 
 enum ImageResult {
     case success(UIImage)
@@ -26,6 +27,16 @@ enum PhotoError: Error {
 class PhotoStore {
     
     let imageStore = ImageStore()
+
+    let persistentContainer: NSPersistentContainer = {
+        let container = NSPersistentContainer(name: "Photorama")
+        container.loadPersistentStores { (description, error) in
+            if let error = error {
+                print("Error setting up Core Data (\(error)).")
+            }
+        }
+        return container
+    }()
     
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -39,7 +50,16 @@ class PhotoStore {
         
         let request = URLRequest(url: url)
         let task = session.dataTask(with: request) { data, response, error -> Void in
-            let result = self.processPhotoRequest(data: data, error: error)
+
+            var result = self.processPhotoRequest(data: data, error: error)
+            if case .success = result {
+                do {
+                    try self.persistentContainer.viewContext.save()
+                } catch let error {
+                    result = .failure(error)
+                }
+            }
+            
             DispatchQueue.main.async {
                 completion(result)
             }
@@ -48,15 +68,19 @@ class PhotoStore {
     }
 
     func fetchImage(for photo: Photo, completion: @escaping (ImageResult) -> Void) {
+        guard let photoKey = photo.photoID else {
+            preconditionFailure("Photo expected to have a photoID.")
+        }
         
-        let photoKey = photo.photoID
         if let image = imageStore.imageForKey(key: photoKey) {
             DispatchQueue.main.async {
                 completion(.success(image))
             }
         }
         
-        let photoURL = photo.remoteURL
+        guard let photoURL = photo.remoteURL as? URL else {
+            preconditionFailure("Photo expected to have a remote URL.")
+        }
         let request = URLRequest(url: photoURL)
         let task = session.dataTask(with: request) {
             (data, response, error) -> Void in
@@ -74,7 +98,7 @@ class PhotoStore {
         task.resume()
     }
     
-    static func photos(fromJSON data: Data) -> PhotosResult {
+    static func photos(fromJSON data: Data, into context: NSManagedObjectContext) -> PhotosResult {
         do {
             let jsonObject = try JSONSerialization.jsonObject(with: data,
                                                               options: [])
@@ -87,7 +111,7 @@ class PhotoStore {
             }
             var finalPhotos = [Photo]()
             for photoJSON in photosArray {
-                if let photo = FlickrAPI.photo(fromJSON: photoJSON) {
+                if let photo = FlickrAPI.photo(fromJSON: photoJSON, into: context) {
                     finalPhotos.append(photo)
                 }
             }
@@ -106,7 +130,7 @@ class PhotoStore {
         guard let jsonData = data else {
             return .failure(error!)
         }
-        return FlickrAPI.photos(fromJSON: jsonData)
+        return FlickrAPI.photos(fromJSON: jsonData, into: persistentContainer.viewContext)
     }
     
     private func processImageRequest(data: Data?, error: Error?) -> ImageResult {
@@ -124,4 +148,22 @@ class PhotoStore {
         
         return .success(image)
     }
+    
+    
+    func fetchAllPhotos(completion: @escaping (PhotosResult) -> Void) {
+        let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+        let sortByDateTaken = NSSortDescriptor(key: #keyPath(Photo.dateTaken),
+                                               ascending: true)
+        fetchRequest.sortDescriptors = [sortByDateTaken]
+        let viewContext = persistentContainer.viewContext
+        viewContext.perform {
+            do {
+                let allPhotos = try viewContext.fetch(fetchRequest)
+                completion(.success(allPhotos))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+    
 }
