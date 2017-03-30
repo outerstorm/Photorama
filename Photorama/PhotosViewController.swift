@@ -13,6 +13,7 @@ class PhotosViewController: UIViewController {
     @IBOutlet var collectionView: UICollectionView!
     var store: PhotoStore!
     let photoDataSource = PhotoDataSource()
+    let refreshControl = UIRefreshControl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,13 +22,22 @@ class PhotosViewController: UIViewController {
         collectionView.dataSource = photoDataSource
         collectionView.delegate = self
         
-        updateDataSource()
+        refreshControl.tintColor = UIColor.gray
+        refreshControl.addTarget(self, action: #selector(PhotosViewController.refresh), for: .valueChanged)
+        collectionView.addSubview(refreshControl)
+        collectionView.alwaysBounceVertical = true
         
-        store.fetchInterestingPhotos() { photosResult in
+        refresh()
+    }
+
+    @objc private func refresh() {
+        updateDataSource()
+        store.fetchRecentPhotos { photosResult in
+            self.refreshControl.endRefreshing()
             self.updateDataSource()
         }
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
