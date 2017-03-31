@@ -29,11 +29,11 @@ struct FlickrAPI {
     }()
 
     static var interestingPhotosURL: URL? {
-        return flickrURL(method: .interestingPhotos, parameters: ["extras": "url_h,date_taken"])
+        return flickrURL(method: .interestingPhotos, parameters: ["extras": "url_h,date_taken,date_upload"])
     }
     
     static var recentPhotosURL: URL? {
-        return flickrURL(method: .recentPhotos, parameters: ["extras": "url_h,date_taken"])
+        return flickrURL(method: .recentPhotos, parameters: ["extras": "url_h,date_taken,date_upload"])
     }
 
     private static func flickrURL(method: Method, parameters: [String: String]?) -> URL? {
@@ -44,7 +44,8 @@ struct FlickrAPI {
             "method": method.rawValue,
             "format": "json",
             "nojsoncallback": "1",
-            "api_key": apiKey
+            "api_key": apiKey,
+            "safe_search": "1"
         ]
         queryItems = baseParams.map( { return URLQueryItem(name: $0.key, value: $0.value) })
 
@@ -88,17 +89,34 @@ struct FlickrAPI {
     }
 
     static func photo(fromJSON json: [String: Any], into context: NSManagedObjectContext) -> Photo? {
-        guard
-            let photoID = json["id"] as? String,
-            let title = json["title"] as? String,
-            let dateString = json["datetaken"] as? String,
-            let photoURLString = json["url_h"] as? String,
-            let url = URL(string: photoURLString),
-            let dateTaken = dateFormatter.date(from: dateString) else {
-                // Don't have enough information to construct a Photo
-                return nil
+        guard let photoID = json["id"] as? String else {
+            return nil
         }
-
+        guard let title = json["title"] as? String else {
+            return nil
+        }
+        guard let dateString = json["datetaken"] as? String else {
+            return nil
+        }
+        guard let photoURLString = json["url_h"] as? String else {
+            return nil
+        }
+        guard let url = URL(string: photoURLString) else {
+            return nil
+        }
+        guard let dateTaken = dateFormatter.date(from: dateString) else {
+            return nil
+        }
+        guard let dateUploadedStr = json["dateupload"] as? String else {
+            return nil
+        }
+        
+        var dateUploaded: Date = Date()
+        guard let epoch = Double(dateUploadedStr) else {
+            return nil
+        }
+        dateUploaded = Date(timeIntervalSince1970: epoch)
+        
         let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "\(#keyPath(Photo.photoID)) == \(photoID)")
         fetchRequest.predicate = predicate
@@ -116,6 +134,7 @@ struct FlickrAPI {
             photo.title = title
             photo.photoID = photoID
             photo.remoteURL = url as NSURL
+            photo.dateUploaded = dateUploaded as NSDate
             photo.dateTaken = dateTaken as NSDate
         }
         

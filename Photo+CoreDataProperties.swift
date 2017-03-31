@@ -2,7 +2,7 @@
 //  Photo+CoreDataProperties.swift
 //  Photorama
 //
-//  Created by Justin Storm on 3/29/17.
+//  Created by Justin Storm on 3/30/17.
 //  Copyright © 2017 McKesson. All rights reserved.
 //
 
@@ -20,6 +20,7 @@ extension Photo {
     @NSManaged public var title: String?
     @NSManaged public var dateTaken: NSDate?
     @NSManaged public var remoteURL: NSObject?
+    @NSManaged public var dateUploaded: NSDate?
     @NSManaged public var tags: NSSet?
 
 }

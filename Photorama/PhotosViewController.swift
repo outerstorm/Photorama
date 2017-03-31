@@ -32,7 +32,7 @@ class PhotosViewController: UIViewController {
 
     @objc private func refresh() {
         updateDataSource()
-        store.fetchRecentPhotos { photosResult in
+        store.fetchInterestingPhotos { photosResult in
             self.refreshControl.endRefreshing()
             self.updateDataSource()
         }
@@ -62,7 +62,14 @@ class PhotosViewController: UIViewController {
             (photosResult) in
             switch photosResult {
             case let .success(photos):
-                self.photoDataSource.photos = photos
+                let sortedPhotos = photos.sorted(by: { (a,b) in
+                    if let aDate = a.dateUploaded as Date?, let bDate = b.dateUploaded as Date? {
+                        return aDate > bDate
+                    }
+                    return false
+                } )
+                
+                self.photoDataSource.photos = sortedPhotos
             case .failure:
                 self.photoDataSource.photos.removeAll()
             }
@@ -90,7 +97,7 @@ extension PhotosViewController: UICollectionViewDelegate {
             let photoIndexPath = IndexPath(item: photoIndex, section: 0)
             // When the request finishes, only update the cell if it's still visible
             if let cell = self.collectionView.cellForItem(at: photoIndexPath) as? PhotoCollectionViewCell {
-                cell.update(with: image)
+                cell.update(with: image, andDateUploaded: photo.dateUploaded as Date?)
             }
         }
     }

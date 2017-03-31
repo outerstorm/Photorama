@@ -10,7 +10,13 @@ import UIKit
 
 class PhotoInfoViewController: UIViewController {
     
+    @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet var imageView: UIImageView!
+    
+    @IBOutlet weak var imageViewBottomConstraint: NSLayoutConstraint!
+    @IBOutlet weak var imageViewLeadingConstraint: NSLayoutConstraint!
+    @IBOutlet weak var imageViewTopConstraint: NSLayoutConstraint!
+    @IBOutlet weak var imageViewTrailingConstraint: NSLayoutConstraint!
     
     var photo: Photo! {
         didSet {
@@ -30,6 +36,13 @@ class PhotoInfoViewController: UIViewController {
                 print("Error fetching image for photo: \(error)")
             }
         }
+        
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        updateMinZoomScaleForSize(size: view.bounds.size)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -42,5 +55,30 @@ class PhotoInfoViewController: UIViewController {
         default:
             preconditionFailure("Unexpected segue identifier.")
         }
-    }    
+    }
+    
+    private func updateMinZoomScaleForSize(size: CGSize) {
+        let imageWidth = imageView.bounds.width
+        let imageHeight = imageView.bounds.height
+        print("Image Width: \(imageWidth), Height: \(imageHeight)")
+        
+        if imageWidth == 0 || imageHeight == 0 {
+            return
+        }
+        
+        let widthScale = size.width / imageWidth
+        let heightScale = size.height / imageHeight
+        let minScale = min(widthScale, heightScale)
+        //let minScale: CGFloat = 0.1
+        scrollView.minimumZoomScale = minScale
+        scrollView.zoomScale = minScale
+        
+        print("Zoom Scale: \(minScale)")
+    }
+}
+
+extension PhotoInfoViewController: UIScrollViewDelegate {
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        return imageView
+    }
 }

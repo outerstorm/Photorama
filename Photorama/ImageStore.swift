@@ -11,7 +11,7 @@ import UIKit
 // to store images in a cache
 class ImageStore: NSObject {
     let cache = NSCache<AnyObject, AnyObject>()
-    
+        
     func imageURLForKey(key: String) -> URL {
         let documentsDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let documentDirectory = documentsDirectories.first!

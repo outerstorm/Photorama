@@ -60,7 +60,7 @@ class TagsViewController: UITableViewController {
             photo.addToTags(tag)
         }
         do {
-            try store.persistentContainer.viewContext.save()
+            try store.recentPhotosContainer.viewContext.save()
         } catch {
             print("Core Data save failed: \(error).")
         }
@@ -93,14 +93,14 @@ class TagsViewController: UITableViewController {
             (action) -> Void in
             
             if let tagName = alertController.textFields?.first?.text {
-                let context = self.store.persistentContainer.viewContext
+                let context = self.store.recentPhotosContainer.viewContext
                 
                 let newTag = NSEntityDescription.insertNewObject(forEntityName: "Tag", into: context)
                 
                 newTag.setValue(tagName, forKey: "name")
                 
                 do {
-                    try self.store.persistentContainer.viewContext.save()
+                    try self.store.recentPhotosContainer.viewContext.save()
                 } catch let error {
                     print("Core Data save failed: \(error)")
                 }

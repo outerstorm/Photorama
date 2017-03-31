@@ -33,8 +33,8 @@ class PhotoStore {
     
     let imageStore = ImageStore()
 
-    let persistentContainer: NSPersistentContainer = {
-        let container = NSPersistentContainer(name: "Photorama")
+    let recentPhotosContainer: NSPersistentContainer = {
+        let container = NSPersistentContainer(name: "PhotoramaRecent")
         container.loadPersistentStores { (description, error) in
             if let error = error {
                 print("Error setting up Core Data (\(error)).")
@@ -56,7 +56,7 @@ class PhotoStore {
         let request = URLRequest(url: url)
         let task = session.dataTask(with: request) { data, response, error -> Void in
 
-            self.processPhotoRequest(data: data, error: error) { result in
+            self.processPhotoRequest(data: data, error: error, withContainer: self.recentPhotosContainer) { result in
                 DispatchQueue.main.async {
                     completion(result)
                 }
@@ -73,7 +73,7 @@ class PhotoStore {
         let request = URLRequest(url: url)
         let task = session.dataTask(with: request) { data, response, error -> Void in
             
-            self.processPhotoRequest(data: data, error: error) { result in
+            self.processPhotoRequest(data: data, error: error, withContainer: self.recentPhotosContainer) { result in
                 DispatchQueue.main.async {
                     completion(result)
                 }
@@ -142,14 +142,13 @@ class PhotoStore {
         }
     }
     
-    private func processPhotoRequest(data: Data?, error: Error?, completion: @escaping (PhotosResult) -> Void) {
+    private func processPhotoRequest(data: Data?, error: Error?, withContainer container: NSPersistentContainer, completion: @escaping (PhotosResult) -> Void) {
         guard let jsonData = data else {
             completion(.failure(error!))
             return
         }
-        //return FlickrAPI.photos(fromJSON: jsonData, into: persistentContainer.viewContext)
      
-        persistentContainer.performBackgroundTask { context in
+        container.performBackgroundTask { context in
             let result = FlickrAPI.photos(fromJSON: jsonData, into: context)
             do {
                 try context.save()
@@ -162,7 +161,7 @@ class PhotoStore {
             switch result {
             case let .success(photos):
                 let photoIDs = photos.map { return $0.objectID }
-                let viewContext = self.persistentContainer.viewContext
+                let viewContext = container.viewContext
                 let viewContextPhotos =
                     photoIDs.map { return viewContext.object(with: $0) } as! [Photo]
                 completion(.success(viewContextPhotos))
@@ -194,7 +193,7 @@ class PhotoStore {
         let sortByDateTaken = NSSortDescriptor(key: #keyPath(Photo.dateTaken),
                                                ascending: true)
         fetchRequest.sortDescriptors = [sortByDateTaken]
-        let viewContext = persistentContainer.viewContext
+        let viewContext = recentPhotosContainer.viewContext
         viewContext.perform {
             do {
                 let allPhotos = try viewContext.fetch(fetchRequest)
@@ -209,7 +208,7 @@ class PhotoStore {
         let fetchRequest: NSFetchRequest<Tag> = Tag.fetchRequest()
         let sortByName = NSSortDescriptor(key: #keyPath(Tag.name), ascending: true)
         fetchRequest.sortDescriptors = [sortByName]
-        let viewContext = persistentContainer.viewContext
+        let viewContext = recentPhotosContainer.viewContext
         viewContext.perform {
             do {
                 let allTags = try fetchRequest.execute()
