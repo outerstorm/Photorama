@@ -65,7 +65,7 @@ extension CIImage {
         switch filter {
         case .none:
             return self
-        case .gloom(let intensity, let radius):
+        case .gloom(let intensity, let radius): 
             parameters = [
                 kCIInputImageKey: self,
                 kCIInputIntensityKey: NSNumber(value: intensity),

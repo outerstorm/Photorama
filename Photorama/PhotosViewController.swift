@@ -14,48 +14,55 @@ class PhotosViewController: UIViewController {
     var store: PhotoStore!
     let photoDataSource = PhotoDataSource()
     let refreshControl = UIRefreshControl()
-    
+
     let imageProcessor = ImageProcessor()
-    let processingQueue = OperationQueue()
     let thumbnailStore = ThumbnailStore()
-    
+
     var selectedFilter = ImageProcessor.Filter.none
     var selectedFeedType: FeedType = .interesting
+
+    var requests: [IndexPath:ImageProcessingRequest] = [:]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        
+
         collectionView.dataSource = photoDataSource
         collectionView.delegate = self
-        
+
         refreshControl.tintColor = UIColor.gray
         refreshControl.addTarget(self, action: #selector(PhotosViewController.refresh), for: .valueChanged)
         collectionView.addSubview(refreshControl)
         collectionView.alwaysBounceVertical = true
-        
+
         refresh()
     }
-
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        clearRequests()
+    }
+    
     @objc private func refresh() {
         updateDataSource()
-        
+
         if selectedFeedType == .interesting {
             store.fetchInterestingPhotos { photosResult in
                 self.refreshControl.endRefreshing()
                 self.updateDataSource()
             }
-            
+
         } else if selectedFeedType == .recent {
             store.fetchRecentPhotos { photosResult in
                 self.refreshControl.endRefreshing()
                 self.updateDataSource()
             }
-            
+
         }
-        
+
     }
-    
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -66,29 +73,29 @@ class PhotosViewController: UIViewController {
         case "showPhoto"?:
             if let selectedIndexPath =
                 collectionView.indexPathsForSelectedItems?.first {
-                let photo = photoDataSource.photos[selectedIndexPath.row]
-                let destinationVC = segue.destination as! PhotoInfoViewController
-                destinationVC.photo = photo
-                destinationVC.store = store
-                destinationVC.imageProcessor = imageProcessor
-                destinationVC.activeFilter = selectedFilter
+                    let photo = photoDataSource.photos[selectedIndexPath.row]
+                    let destinationVC = segue.destination as! PhotoInfoViewController
+                    destinationVC.photo = photo
+                    destinationVC.store = store
+                    destinationVC.imageProcessor = imageProcessor
+                    destinationVC.activeFilter = selectedFilter
             } default:
-                preconditionFailure("Unexpected segue identifier.")
+            preconditionFailure("Unexpected segue identifier.")
         }
     }
-    
+
     private func updateDataSource() {
         store.fetchAllPhotos(forFeedType: selectedFeedType) {
             (photosResult) in
             switch photosResult {
             case let .success(photos):
-                let sortedPhotos = photos.sorted(by: { (a,b) in
+                let sortedPhotos = photos.sorted(by: { (a, b) in
                     if let aDate = a.dateUploaded as Date?, let bDate = b.dateUploaded as Date? {
                         return aDate > bDate
                     }
                     return false
-                } )
-                
+                })
+
                 self.photoDataSource.photos = sortedPhotos
             case .failure:
                 self.photoDataSource.photos.removeAll()
@@ -96,25 +103,26 @@ class PhotosViewController: UIViewController {
             self.collectionView.reloadSections(IndexSet(integer: 0))
         }
     }
-    
+
     @IBAction func toggleFeed(_ sender: Any) {
         if selectedFeedType == .interesting {
             selectedFeedType = .recent
         } else {
             selectedFeedType = .interesting
         }
+        clearRequests()
         refresh()
     }
-    
+
     @IBAction func filterChoiceChanged(sender: UISegmentedControl) {
         enum FilterChoice: Int {
             case none = 0, gloom, sepia, blur, mono
         }
-        
+
         guard let choice = FilterChoice(rawValue: sender.selectedSegmentIndex) else {
             fatalError("Impossible segment selected: \(sender.selectedSegmentIndex)")
         }
-        
+
         switch choice {
         case .none:
             selectedFilter = .none
@@ -125,13 +133,20 @@ class PhotosViewController: UIViewController {
         case .blur:
             selectedFilter = .blur(radius: 10.0)
         case .mono:
-            selectedFilter = .mono(color: UIColor.green, intensity: 3.0)
+            selectedFilter = .mono(color: UIColor.cyan, intensity: 3.0)
         }
-        
+
         thumbnailStore.clearThumbnails()
+        clearRequests()
         collectionView.reloadData()
     }
-    
+
+    func clearRequests() {
+        requests.forEach { r in
+            r.value.cancel()
+        }
+        requests.removeAll()
+    }
 }
 
 extension PhotosViewController: UICollectionViewDelegate {
@@ -139,13 +154,18 @@ extension PhotosViewController: UICollectionViewDelegate {
                         willDisplay cell: UICollectionViewCell,
                         forItemAt indexPath: IndexPath) {
         let photo = photoDataSource.photos[indexPath.row]
-        
+
         if let photoId = photo.photoID as NSString?,
             let thumbnail = thumbnailStore.thumbnail(forKey: photoId),
             let cell = cell as? PhotoCollectionViewCell {
-            
-            cell.update(with: thumbnail, andDateUploaded: photo.dateUploaded as Date?)
-            
+
+                cell.update(with: thumbnail, andDateUploaded: photo.dateUploaded as Date?)
+
+                return
+        }
+
+        if let request = requests[indexPath] {
+            request.priority = .high
             return
         }
         
@@ -160,36 +180,49 @@ extension PhotosViewController: UICollectionViewDelegate {
                     return
             }
             let photoIndexPath = IndexPath(item: photoIndex, section: 0)
-            
-            self.processingQueue.addOperation {
-                // Prepare the actions for thumbnail creation
-                let maxSize = CGSize(width: 200, height: 200)
-                let scaleAction = ImageProcessor.Action.scale(maxSize: maxSize)
-                let faceFuzzAction = ImageProcessor.Action.pixellatedFaces
-                let filterAction = ImageProcessor.Action.filter(self.selectedFilter)
-                let actions = [scaleAction, filterAction, faceFuzzAction]
-                
+
+            // Prepare the actions for thumbnail creation
+            let maxSize = CGSize(width: 200, height: 200)
+            let scaleAction = ImageProcessor.Action.scale(maxSize: maxSize)
+            let faceFuzzAction = ImageProcessor.Action.pixellatedFaces
+            let filterAction = ImageProcessor.Action.filter(self.selectedFilter)
+            let actions = [scaleAction, filterAction, faceFuzzAction]
+
+            let request = self.imageProcessor.process(image: image, actions: actions, priority: .high) { thumbResult in
                 // Actually process the available photo into a thumbnail
                 let thumbnail: UIImage
-                do {
-                    thumbnail = try self.imageProcessor.perform(actions, on: image)
-                } catch {
-                    print("Error: unable to generate filtered thumbnail for \(photo): \(error)")
+                switch thumbResult {
+                case .success(let filteredImage):
+                    thumbnail = filteredImage
+                case .failure(let error):
+                    print("Error: unable to generate filtered thumbnail for \(String(describing: photo.photoID)): \(error)")
+                    thumbnail = image
+                case .cancelled:
                     thumbnail = image
                 }
-                
+
                 OperationQueue.main.addOperation {
                     if let photoId = photo.photoID as NSString? {
                         self.thumbnailStore.setThumbnail(image: thumbnail, forKey: photoId)
                     }
-                    
+
                     // When the request finishes, only update the cell if it's still visible
                     if let cell = self.collectionView.cellForItem(at: photoIndexPath) as? PhotoCollectionViewCell {
                         cell.update(with: thumbnail, andDateUploaded: photo.dateUploaded as Date?)
                     }
+                    
+                    self.requests[indexPath] = nil
                 }
             }
             
+            OperationQueue.main.addOperation {
+                self.requests[indexPath] = request
+            }
+
         }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        requests[indexPath] = nil
     }
 }
