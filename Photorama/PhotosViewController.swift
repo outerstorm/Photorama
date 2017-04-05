@@ -108,7 +108,7 @@ class PhotosViewController: UIViewController {
     
     @IBAction func filterChoiceChanged(sender: UISegmentedControl) {
         enum FilterChoice: Int {
-            case none = 0, gloom, sepia, blur
+            case none = 0, gloom, sepia, blur, mono
         }
         
         guard let choice = FilterChoice(rawValue: sender.selectedSegmentIndex) else {
@@ -124,6 +124,8 @@ class PhotosViewController: UIViewController {
             selectedFilter = .sephia(intensity: 3.0)
         case .blur:
             selectedFilter = .blur(radius: 10.0)
+        case .mono:
+            selectedFilter = .mono(color: UIColor.green, intensity: 3.0)
         }
         
         thumbnailStore.clearThumbnails()

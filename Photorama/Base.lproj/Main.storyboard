@@ -81,13 +81,14 @@
                                     <barButtonItem style="plain" systemItem="flexibleSpace" id="zIh-XY-TZP"/>
                                     <barButtonItem style="plain" id="sGe-11-GE2">
                                         <segmentedControl key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" id="D8P-sN-cZo">
-                                            <rect key="frame" x="78" y="7" width="219" height="30"/>
+                                            <rect key="frame" x="26" y="7" width="322" height="30"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <segments>
                                                 <segment title="None"/>
                                                 <segment title="Gloom"/>
                                                 <segment title="Sepia"/>
                                                 <segment title="Blur"/>
+                                                <segment title="Mono"/>
                                             </segments>
                                             <connections>
                                                 <action selector="filterChoiceChangedWithSender:" destination="BYZ-38-t0r" eventType="valueChanged" id="ZLF-M7-7jl"/>

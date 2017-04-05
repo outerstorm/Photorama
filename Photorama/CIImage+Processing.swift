@@ -7,6 +7,7 @@
 //
 
 import CoreImage
+import UIKit
 
 extension CIImage {
     func scaled(toFit maxSize: CGSize) -> CIImage {
@@ -86,6 +87,16 @@ extension CIImage {
             ]
             filterName = "CIGaussianBlur"
             shouldCrop = true
+        case .mono(let color, let intensity):
+            let ciColor = CIColor(color: color)
+            
+            parameters = [
+                kCIInputImageKey: self,
+                kCIInputColorKey: ciColor,
+                kCIInputIntensityKey: NSNumber(value: intensity)
+            ]
+            filterName = "CIColorMonochrome"
+            shouldCrop = false
         }
         
         guard let filter = CIFilter(name: filterName, withInputParameters: parameters),
