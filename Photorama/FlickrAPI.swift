@@ -13,6 +13,11 @@ enum FlickrError: Error {
     case invalidJSONData
 }
 
+enum FeedType: Int32 {
+    case interesting = 1
+    case recent = 2
+}
+
 enum Method: String {
     case interestingPhotos = "flickr.interestingness.getList"
     case recentPhotos = "flickr.photos.getRecent"
@@ -58,7 +63,7 @@ struct FlickrAPI {
         return components?.url
     }
 
-    static func photos(fromJSON data: Data, into context: NSManagedObjectContext) -> PhotosResult {
+    static func photos(fromJSON data: Data, andFeedType feedType: FeedType, into context: NSManagedObjectContext) -> PhotosResult {
         do {
             let jsonObject = try JSONSerialization.jsonObject(with: data,
                                                               options: [])
@@ -72,7 +77,7 @@ struct FlickrAPI {
             
             var finalPhotos = [Photo]()
             for photoJSON in photosArray {
-                if let photo = photo(fromJSON: photoJSON, into: context) {
+                if let photo = photo(fromJSON: photoJSON, andFeedType: feedType, into: context) {
                     finalPhotos.append(photo)
                 }
             }
@@ -88,7 +93,7 @@ struct FlickrAPI {
         }
     }
 
-    static func photo(fromJSON json: [String: Any], into context: NSManagedObjectContext) -> Photo? {
+    static func photo(fromJSON json: [String: Any], andFeedType feedType: FeedType, into context: NSManagedObjectContext) -> Photo? {
         guard let photoID = json["id"] as? String else {
             return nil
         }
@@ -136,6 +141,7 @@ struct FlickrAPI {
             photo.remoteURL = url as NSURL
             photo.dateUploaded = dateUploaded as NSDate
             photo.dateTaken = dateTaken as NSDate
+            photo.feedType = feedType.rawValue
         }
         
         return photo

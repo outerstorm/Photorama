@@ -56,7 +56,7 @@ class PhotoStore {
         let request = URLRequest(url: url)
         let task = session.dataTask(with: request) { data, response, error -> Void in
 
-            self.processPhotoRequest(data: data, error: error, withContainer: self.recentPhotosContainer) { result in
+            self.processPhotoRequest(feedType: .interesting, data: data, error: error, withContainer: self.recentPhotosContainer) { result in
                 DispatchQueue.main.async {
                     completion(result)
                 }
@@ -73,7 +73,7 @@ class PhotoStore {
         let request = URLRequest(url: url)
         let task = session.dataTask(with: request) { data, response, error -> Void in
             
-            self.processPhotoRequest(data: data, error: error, withContainer: self.recentPhotosContainer) { result in
+            self.processPhotoRequest(feedType: .recent, data: data, error: error, withContainer: self.recentPhotosContainer) { result in
                 DispatchQueue.main.async {
                     completion(result)
                 }
@@ -114,7 +114,7 @@ class PhotoStore {
         task.resume()
     }
     
-    static func photos(fromJSON data: Data, into context: NSManagedObjectContext) -> PhotosResult {
+    static func photos(fromJSON data: Data, andFeedType feedType: FeedType, into context: NSManagedObjectContext) -> PhotosResult {
         do {
             let jsonObject = try JSONSerialization.jsonObject(with: data,
                                                               options: [])
@@ -127,7 +127,7 @@ class PhotoStore {
             }
             var finalPhotos = [Photo]()
             for photoJSON in photosArray {
-                if let photo = FlickrAPI.photo(fromJSON: photoJSON, into: context) {
+                if let photo = FlickrAPI.photo(fromJSON: photoJSON, andFeedType: feedType, into: context) {
                     finalPhotos.append(photo)
                 }
             }
@@ -142,14 +142,14 @@ class PhotoStore {
         }
     }
     
-    private func processPhotoRequest(data: Data?, error: Error?, withContainer container: NSPersistentContainer, completion: @escaping (PhotosResult) -> Void) {
+    private func processPhotoRequest(feedType: FeedType, data: Data?, error: Error?, withContainer container: NSPersistentContainer, completion: @escaping (PhotosResult) -> Void) {
         guard let jsonData = data else {
             completion(.failure(error!))
             return
         }
      
         container.performBackgroundTask { context in
-            let result = FlickrAPI.photos(fromJSON: jsonData, into: context)
+            let result = FlickrAPI.photos(fromJSON: jsonData, andFeedType: feedType, into: context)
             do {
                 try context.save()
             } catch {
@@ -188,8 +188,12 @@ class PhotoStore {
     }
     
     
-    func fetchAllPhotos(completion: @escaping (PhotosResult) -> Void) {
+    func fetchAllPhotos(forFeedType feedType: FeedType, completion: @escaping (PhotosResult) -> Void) {
         let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+        
+        let predicate = NSPredicate(format: "\(#keyPath(Photo.feedType)) == \(feedType.rawValue)")
+        fetchRequest.predicate = predicate
+        
         let sortByDateTaken = NSSortDescriptor(key: #keyPath(Photo.dateTaken),
                                                ascending: true)
         fetchRequest.sortDescriptors = [sortByDateTaken]

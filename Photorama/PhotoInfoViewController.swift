@@ -24,14 +24,30 @@ class PhotoInfoViewController: UIViewController {
         }
     }
     var store: PhotoStore!
-    
+    var imageProcessor: ImageProcessor!
+    var activeFilter: ImageProcessor.Filter!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         store.fetchImage(for: photo) { (result) -> Void in
             switch result {
             case let .success(image):
-                self.imageView.image = image
+                
+                let fuzzAction = ImageProcessor.Action.pixellatedFaces
+                let filterAction = ImageProcessor.Action.filter(self.activeFilter)
+                let actions = [fuzzAction, filterAction]
+                
+                var filteredImage: UIImage
+                do {
+                    filteredImage = try self.imageProcessor.perform(actions, on: image)
+                } catch {
+                    print("Error: unable to filter image for \(self.photo): \(error)")
+                    filteredImage = image
+                }
+                
+                OperationQueue.main.addOperation {
+                    self.imageView.image = filteredImage
+                }
             case let .failure(error):
                 print("Error fetching image for photo: \(error)")
             }
@@ -60,8 +76,6 @@ class PhotoInfoViewController: UIViewController {
     private func updateMinZoomScaleForSize(size: CGSize) {
         let imageWidth = imageView.bounds.width
         let imageHeight = imageView.bounds.height
-        print("Image Width: \(imageWidth), Height: \(imageHeight)")
-        
         if imageWidth == 0 || imageHeight == 0 {
             return
         }
@@ -69,11 +83,8 @@ class PhotoInfoViewController: UIViewController {
         let widthScale = size.width / imageWidth
         let heightScale = size.height / imageHeight
         let minScale = min(widthScale, heightScale)
-        //let minScale: CGFloat = 0.1
         scrollView.minimumZoomScale = minScale
         scrollView.zoomScale = minScale
-        
-        print("Zoom Scale: \(minScale)")
     }
 }
 

@@ -9,10 +9,10 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--Photorama-->
+        <!--PhotoViewController-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="PhotosViewController" customModule="Photorama" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" userLabel="PhotoViewController" customClass="PhotosViewController" customModule="Photorama" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -22,7 +22,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" maximumZoomScale="4" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="pWM-35-rR9">
-                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="623"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="2" minimumInteritemSpacing="2" id="0sd-KS-yHp">
                                     <size key="itemSize" width="180" height="180"/>
@@ -72,16 +72,50 @@
                                     </collectionViewCell>
                                 </cells>
                             </collectionView>
+                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="cbP-nb-sd7">
+                                <rect key="frame" x="0.0" y="623" width="375" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="zjr-Uc-Li1"/>
+                                </constraints>
+                                <items>
+                                    <barButtonItem style="plain" systemItem="flexibleSpace" id="zIh-XY-TZP"/>
+                                    <barButtonItem style="plain" id="sGe-11-GE2">
+                                        <segmentedControl key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" id="D8P-sN-cZo">
+                                            <rect key="frame" x="78" y="7" width="219" height="30"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <segments>
+                                                <segment title="None"/>
+                                                <segment title="Gloom"/>
+                                                <segment title="Sepia"/>
+                                                <segment title="Blur"/>
+                                            </segments>
+                                            <connections>
+                                                <action selector="filterChoiceChangedWithSender:" destination="BYZ-38-t0r" eventType="valueChanged" id="ZLF-M7-7jl"/>
+                                            </connections>
+                                        </segmentedControl>
+                                    </barButtonItem>
+                                    <barButtonItem style="plain" systemItem="flexibleSpace" id="hrI-nf-NxJ"/>
+                                </items>
+                            </toolbar>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="cbP-nb-sd7" secondAttribute="bottom" id="4i2-lk-BTF"/>
                             <constraint firstItem="pWM-35-rR9" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="BAE-Eo-h7V"/>
                             <constraint firstItem="pWM-35-rR9" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="EPq-7J-Bfi"/>
+                            <constraint firstAttribute="trailing" secondItem="cbP-nb-sd7" secondAttribute="trailing" id="ObK-Oj-qCT"/>
+                            <constraint firstItem="cbP-nb-sd7" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="WpU-Lf-wTc"/>
                             <constraint firstAttribute="trailing" secondItem="pWM-35-rR9" secondAttribute="trailing" id="dk9-iD-pgJ"/>
-                            <constraint firstAttribute="bottom" secondItem="pWM-35-rR9" secondAttribute="bottom" id="xiD-6F-lOH"/>
+                            <constraint firstItem="pWM-35-rR9" firstAttribute="bottom" secondItem="cbP-nb-sd7" secondAttribute="top" id="k9y-a0-rZm"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" title="Photorama" id="WdW-mL-SQT"/>
+                    <navigationItem key="navigationItem" title="Photorama" id="WdW-mL-SQT">
+                        <barButtonItem key="rightBarButtonItem" systemItem="bookmarks" id="BOM-yG-ZRi">
+                            <connections>
+                                <action selector="toggleFeed:" destination="BYZ-38-t0r" id="Bh1-zb-tIT"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
                         <outlet property="collectionView" destination="pWM-35-rR9" id="s9J-Q8-uQU"/>
                     </connections>
@@ -164,7 +198,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="yW1-pW-4LQ">
-                                            <rect key="frame" x="16" y="0.0" width="344" height="43.5"/>
+                                            <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <nil key="textColor"/>
