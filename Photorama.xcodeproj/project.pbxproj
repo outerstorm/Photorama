@@ -30,6 +30,10 @@
 		D065CD531E9541F100289E1C /* Photo+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD521E9541F100289E1C /* Photo+CoreDataProperties.swift */; };
 		D065CD731E956D9400289E1C /* ImageProcessingOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD721E956D9400289E1C /* ImageProcessingOperation.swift */; };
 		D065CD751E95725F00289E1C /* ImageProcessingRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD741E95725F00289E1C /* ImageProcessingRequest.swift */; };
+		D065CD771E966DAF00289E1C /* PhotoExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD761E966DAF00289E1C /* PhotoExtensions.swift */; };
+		D065CD791E96814600289E1C /* SpaceFillingFlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD781E96814600289E1C /* SpaceFillingFlowLayout.swift */; };
+		D065CD7B1E968A7600289E1C /* FlipLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD7A1E968A7600289E1C /* FlipLayout.swift */; };
+		D065CD7D1E96943900289E1C /* AnchorableAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D065CD7C1E96943900289E1C /* AnchorableAttributes.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +83,10 @@
 		D065CD521E9541F100289E1C /* Photo+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Photo+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		D065CD721E956D9400289E1C /* ImageProcessingOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageProcessingOperation.swift; sourceTree = "<group>"; };
 		D065CD741E95725F00289E1C /* ImageProcessingRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageProcessingRequest.swift; sourceTree = "<group>"; };
+		D065CD761E966DAF00289E1C /* PhotoExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoExtensions.swift; sourceTree = "<group>"; };
+		D065CD781E96814600289E1C /* SpaceFillingFlowLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpaceFillingFlowLayout.swift; sourceTree = "<group>"; };
+		D065CD7A1E968A7600289E1C /* FlipLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FlipLayout.swift; sourceTree = "<group>"; };
+		D065CD7C1E96943900289E1C /* AnchorableAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnchorableAttributes.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +151,7 @@
 				D02F460B1E941DDA0019A549 /* CIImage+Processing.swift */,
 				D065CD721E956D9400289E1C /* ImageProcessingOperation.swift */,
 				D065CD741E95725F00289E1C /* ImageProcessingRequest.swift */,
+				D065CD761E966DAF00289E1C /* PhotoExtensions.swift */,
 			);
 			path = Photorama;
 			sourceTree = "<group>";
@@ -174,6 +183,9 @@
 				D00B448F1E8C40950043D584 /* TagsDataSource.swift */,
 				D01A76F11E8BEF7100EB9B3A /* PhotosViewController.swift */,
 				D00B44821E8C32EC0043D584 /* PhotoInfoViewController.swift */,
+				D065CD781E96814600289E1C /* SpaceFillingFlowLayout.swift */,
+				D065CD7A1E968A7600289E1C /* FlipLayout.swift */,
+				D065CD7C1E96943900289E1C /* AnchorableAttributes.swift */,
 			);
 			name = ViewControllers;
 			sourceTree = "<group>";
@@ -343,12 +355,15 @@
 				D065CD511E951B0C00289E1C /* ThumbnailStore.swift in Sources */,
 				D065CD731E956D9400289E1C /* ImageProcessingOperation.swift in Sources */,
 				D01A771E1E8BF43A00EB9B3A /* FlickrAPI.swift in Sources */,
+				D065CD771E966DAF00289E1C /* PhotoExtensions.swift in Sources */,
 				D01A76F21E8BEF7100EB9B3A /* PhotosViewController.swift in Sources */,
 				D00B44901E8C40950043D584 /* TagsDataSource.swift in Sources */,
+				D065CD7B1E968A7600289E1C /* FlipLayout.swift in Sources */,
 				D02F460A1E941D310019A549 /* ImageProcessor.swift in Sources */,
 				D01A77201E8BFAAC00EB9B3A /* PhotoStore.swift in Sources */,
 				D00B44811E8C30770043D584 /* ImageStore.swift in Sources */,
 				D02F460C1E941DDA0019A549 /* CIImage+Processing.swift in Sources */,
+				D065CD791E96814600289E1C /* SpaceFillingFlowLayout.swift in Sources */,
 				D00B448E1E8C40320043D584 /* TagsViewController.swift in Sources */,
 				D00B447D1E8C2B6B0043D584 /* PhotoDataSource.swift in Sources */,
 				D00B44C21E8D724C0043D584 /* Photo+CoreDataClass.swift in Sources */,
@@ -356,6 +371,7 @@
 				D00B447F1E8C2CB50043D584 /* PhotoCollectionViewCell.swift in Sources */,
 				D01A76F01E8BEF7100EB9B3A /* AppDelegate.swift in Sources */,
 				D065CD531E9541F100289E1C /* Photo+CoreDataProperties.swift in Sources */,
+				D065CD7D1E96943900289E1C /* AnchorableAttributes.swift in Sources */,
 				D065CD751E95725F00289E1C /* ImageProcessingRequest.swift in Sources */,
 				D00B44831E8C32EC0043D584 /* PhotoInfoViewController.swift in Sources */,
 			);

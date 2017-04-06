@@ -42,4 +42,17 @@ class PhotoCollectionViewCell: UICollectionViewCell {
             dateUploaded.text = nil
         }
     }
+    
+    override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
+        defer {
+            super.apply(layoutAttributes)
+        }
+        
+        guard let anchorableAttributes = layoutAttributes as? AnchorableAttributes else {
+            layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+            return
+        }
+        
+        layer.anchorPoint = anchorableAttributes.anchorPoint
+    }
 }

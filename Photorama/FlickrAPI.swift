@@ -77,7 +77,7 @@ struct FlickrAPI {
             
             var finalPhotos = [Photo]()
             for photoJSON in photosArray {
-                if let photo = photo(fromJSON: photoJSON, andFeedType: feedType, into: context) {
+                if let photo = photo(fromJSON: photoJSON, andFeedType: feedType, into: context), !photo.isExpired {
                     finalPhotos.append(photo)
                 }
             }

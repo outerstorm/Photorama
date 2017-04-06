@@ -189,23 +189,41 @@ class PhotoStore {
     
     
     func fetchAllPhotos(forFeedType feedType: FeedType, completion: @escaping (PhotosResult) -> Void) {
-        let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
-        
-        let predicate = NSPredicate(format: "\(#keyPath(Photo.feedType)) == \(feedType.rawValue)")
-        fetchRequest.predicate = predicate
-        
-        let sortByDateTaken = NSSortDescriptor(key: #keyPath(Photo.dateTaken),
-                                               ascending: true)
-        fetchRequest.sortDescriptors = [sortByDateTaken]
-        let viewContext = recentPhotosContainer.viewContext
-        viewContext.perform {
-            do {
-                let allPhotos = try viewContext.fetch(fetchRequest)
-                completion(.success(allPhotos))
-            } catch {
-                completion(.failure(error))
+        cleanUpPhotos() {
+            let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+            let predicate = NSPredicate(format: "\(#keyPath(Photo.feedType)) == \(feedType.rawValue)")
+            fetchRequest.predicate = predicate
+            
+            let sortByDateTaken = NSSortDescriptor(key: #keyPath(Photo.dateTaken),
+                                                   ascending: true)
+            fetchRequest.sortDescriptors = [sortByDateTaken]
+            let viewContext = self.recentPhotosContainer.viewContext
+            viewContext.perform {
+                do {
+                    let allPhotos = try viewContext.fetch(fetchRequest)
+                    completion(.success(allPhotos))
+                } catch {
+                    completion(.failure(error))
+                }
             }
         }
+    }
+    
+    func cleanUpPhotos(completion: @escaping ()->()) {
+        let cutoffDate = Date().addingTimeInterval(-3600 * 36) //anything older than 36 hours
+        let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+        let predicate = NSPredicate(format: "\(#keyPath(Photo.dateUploaded)) < %@", cutoffDate as NSDate)
+        fetchRequest.predicate = predicate
+
+        let viewContext = recentPhotosContainer.viewContext
+        viewContext.perform {
+            if let oldPhotos = try? viewContext.fetch(fetchRequest) {
+                oldPhotos.forEach { photo in
+                    viewContext.delete(photo)
+                }
+            }
+        }
+        completion()
     }
     
     func fetchAllTags(completion: @escaping (TagsResult) -> Void) {

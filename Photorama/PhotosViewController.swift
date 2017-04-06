@@ -23,10 +23,18 @@ class PhotosViewController: UIViewController {
 
     var requests: [IndexPath:ImageProcessingRequest] = [:]
     
+    private var initialScale: CGFloat = 1.0
+    private var isTransitioning: Bool = false
+    private var transitionLayout: UICollectionViewTransitionLayout?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
 
+        
+        let pinchGR = UIPinchGestureRecognizer(target: self, action: #selector(PhotosViewController.pinched(_:)))
+        collectionView.addGestureRecognizer(pinchGR)
+        
         collectionView.dataSource = photoDataSource
         collectionView.delegate = self
 
@@ -68,6 +76,40 @@ class PhotosViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    @objc private func pinched(_ gr: UIPinchGestureRecognizer) {
+        switch gr.state {
+        case .began:
+            if let currentLayout = collectionView?.collectionViewLayout {
+                let nextLayout = currentLayout is FlipLayout ? SpaceFillingFlowLayout() : FlipLayout()
+                transitionLayout = collectionView?.startInteractiveTransition(to: nextLayout)
+            }
+        case .changed:
+            let progress: CGFloat
+            let startingScale: CGFloat = 1.0
+            let currentScale = gr.scale
+            let targetScale: CGFloat
+            if transitionLayout?.nextLayout is FlipLayout {
+                targetScale = 0.25
+                progress = (startingScale - currentScale) / (startingScale - targetScale)
+            } else {
+                targetScale = 4.0
+                progress = (currentScale - startingScale) / (targetScale - startingScale)
+            }
+            transitionLayout?.transitionProgress = progress
+        case .ended:
+            guard let transitionProgress = transitionLayout?.transitionProgress else {
+                collectionView?.cancelInteractiveTransition()
+                return
+            }
+            if transitionProgress > 0.7 {
+                collectionView?.finishInteractiveTransition()
+            } else {
+                collectionView?.cancelInteractiveTransition()
+            }
+        default: break
+        }
+    }
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         switch segue.identifier {
         case "showPhoto"?:
@@ -224,5 +266,10 @@ extension PhotosViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         requests[indexPath] = nil
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, transitionLayoutForOldLayout fromLayout: UICollectionViewLayout, newLayout toLayout: UICollectionViewLayout) -> UICollectionViewTransitionLayout {
+        
+        return UICollectionViewTransitionLayout(currentLayout: fromLayout, nextLayout: toLayout)
     }
 }
