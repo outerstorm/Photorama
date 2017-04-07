@@ -23,6 +23,9 @@ class PhotosViewController: UIViewController {
 
     var requests: [IndexPath:ImageProcessingRequest] = [:]
     
+    var currentLayout: UICollectionViewLayout = UICollectionViewFlowLayout()
+    var pinchGR: UIPinchGestureRecognizer?
+    
     private var initialScale: CGFloat = 1.0
     private var isTransitioning: Bool = false
     private var transitionLayout: UICollectionViewTransitionLayout?
@@ -30,11 +33,10 @@ class PhotosViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-
         
-        let pinchGR = UIPinchGestureRecognizer(target: self, action: #selector(PhotosViewController.pinched(_:)))
-        collectionView.addGestureRecognizer(pinchGR)
+        pinchGR = UIPinchGestureRecognizer(target: self, action: #selector(PhotosViewController.pinched(_:)))
         
+        collectionView.collectionViewLayout = currentLayout
         collectionView.dataSource = photoDataSource
         collectionView.delegate = self
 
@@ -74,6 +76,22 @@ class PhotosViewController: UIViewController {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    @IBAction func toggleLayout(_ sender: Any) {
+        if currentLayout is FlipLayout || currentLayout is SpaceFillingFlowLayout {
+            currentLayout = UICollectionViewFlowLayout()
+            if let gr = pinchGR {
+                collectionView.removeGestureRecognizer(gr)
+            }
+        } else {
+            currentLayout = SpaceFillingFlowLayout()
+            if let gr = pinchGR {
+                collectionView.addGestureRecognizer(gr)
+            }
+        }
+        
+        self.collectionView.setCollectionViewLayout(currentLayout, animated: true)
     }
 
     @objc private func pinched(_ gr: UIPinchGestureRecognizer) {
@@ -272,4 +290,11 @@ extension PhotosViewController: UICollectionViewDelegate {
         
         return UICollectionViewTransitionLayout(currentLayout: fromLayout, nextLayout: toLayout)
     }
+
+    func collectionView(_ collectionView: UICollectionView,
+                        layout collectionViewLayout: UICollectionViewLayout,
+                        sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize{
+        return CGSize(width: 140, height: 140)
+    }
+    
 }
